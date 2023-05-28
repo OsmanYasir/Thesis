@@ -1,3 +1,10 @@
 # Automatic Payment Details Extraction Of Bills In Kyrgyzstan
 
- This thesis presents an automatic system for extracting payment information from bills in Kyrgyzstan, leveraging image preprocessing, OCR, and data extraction techniques. The system employs Python, OpenCV, pytesseract, and regex, enhancing the efficiency and accuracy of bill processing. The project aims to facilitate digital saving and automated bill payments, contributing to improved financial management and overall economic development in Kyrgyzstan.
+This thesis presents the development and evaluation of a bill information extraction
+system using Optical Character Recognition (OCR) technology. The study encompasses
+various aspects of image preprocessing, including grayscale conversion, normalization,
+thresholding, and noise removal. Post-processing focuses on data extraction via pattern
+recognition and field mapping. The system demonstrates satisfactory performance,
+particularly for high-quality single-page preprocessed bills, highlighting the effectiveness of
+the proposed techniques. The outcomes suggest potential for improvements, thereby
+contributing to the expanding field of OCR and data extraction research.
