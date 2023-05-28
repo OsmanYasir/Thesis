@@ -2,7 +2,7 @@ import re
 from difflib import get_close_matches
 
 
-def extractorganization(text, orgsfile="./optimaUtils.txt", n=5, cutoff=0.1, step=0.001):
+def extractorganization(text, orgsfile="./optimaUtils.txt"):
     """
     Finds the closest matches in a list of organizations to a given text.
 
@@ -25,11 +25,7 @@ def extractorganization(text, orgsfile="./optimaUtils.txt", n=5, cutoff=0.1, ste
     # Clean the text by removing newline characters and multiple spaces
     clean_text = re.sub(r'\n|\d+|\s{2,}', ' ', text).strip()
 
-    matches = []
-
-    while len(matches) < n and cutoff > 0:
-        matches = get_close_matches(clean_text, organizations, n=n, cutoff=cutoff)
-        cutoff -= step
+    matches, cutoff = find_close_matches_with_threshold(clean_text,organizations)
 
     if len(matches) == 1:
         return matches[0]
@@ -37,16 +33,40 @@ def extractorganization(text, orgsfile="./optimaUtils.txt", n=5, cutoff=0.1, ste
         return matches
 
 
+def find_close_matches_with_threshold(target, words, step=0.001, cutoff=0.1, n=1):
+    matches = []
+    while len(matches) < n and cutoff > 0:
+        matches = get_close_matches(target, words, n=n, cutoff=cutoff)
+        cutoff -= step
+    return matches, cutoff + step
+
+
 # todo find closest word for keyword then perform regex on that
 def extractpaymentid(text):
-    # todo remove unneccessary items from list
 
-    id = re.findall("(?i)счет([\s0-9]+)+", text)
-    if len(id) == 0:
-        id = re.findall("(?i)чет([\s0-9]+)+", text)
+    # patterns = ["Л/счет[\s\S]{0,3}?(\d[\d\s-]*\d|\d)",
+    #     r"(?i)Лицевой[\s\S]*?счет[\s\S]{0,10}?(\d[\d\s-]*\d|\d)",
+    # r"(?i)счет[\s\S]{0,10}?(\d[\d\s-]*\d|\d)",
+    # r"(?i)Лицевой[\s\S]{0,10}?(\d[\d\s-]*\d|\d)"
+    #             ]
+    # total = []
+    # for pattern in patterns:
+    #     matches = re.findall(pattern, text)
+    #     if clean_and_remove_duplicates(matches):
+    #         total.extend(matches)
+    #         break
+    #
+    # total = clean_and_remove_duplicates(total)
+    #
+    #
+    # return total[0] if len(total) == 1 else total
 
-    ids = clean_and_remove_duplicates(id)
-    return ids[0] if len(ids) == 1 else ids
+    t = "Л/счет Лицевой счет"
+    pattern = "[\s\S]{0,15}?(\d[\d\s-]*\d|\d)"
+
+    matches, cut = extract_by_closest_match(text, t, pattern)
+
+    return clean_and_remove_duplicates(matches)
 
 
 def extractperiod(text):
@@ -55,15 +75,16 @@ def extractperiod(text):
     periods = clean_and_remove_duplicates(period)
     return periods[0] if len(periods) == 1 else periods
 
+
 def extractamount(text):
     patterns = [
         "(?i)Итого\sк\sоплате\s([0-9.,]+)+",
-        "(?i)к\sоплате\s([0-9.,]+)+",
+        "(?i)к\sоплате\s:?([0-9.,]+)+",
         "(?i)оплате\s([0-9.,]+)+",
         # "(?i)К\sоплате\sза\sэл\.зн.{0,10}(\d[\d,.]*\d|\d)",
-        "(?i)К\sоплате\sза\sэл\.зн,\s(\d[\d,.]*\d|\d)",
-        "(?i)Итого\sк\sоплате.{0,10}(\d[\d,.]*\d|\d)",
-        "(?i)к\sоплате.{0,10}(\d[\d,.]*\d|\d)",
+        "(?i)оплате\sза\sэл\.зн,\s(\d[\d,.]*\d|\d)",
+        "(?i)Итого\sк\sоплате[\s\S]{0,10}?(\d[\d,.]*\d|\d)",
+        "(?i)к\sоплате[\s\S]{0,10}?(\d[\d,.]*\d|\d)",
 
         "(?i)оплате[^0-9]+([0-9.,]+)+"
     ]
@@ -79,6 +100,15 @@ def extractamount(text):
     total = clean_and_remove_duplicates(total)
     return total[0] if len(total) == 1 else total
 
+    # t0 = "Итого к оплате"
+    # t1 = "к оплате"
+    # t2 = "оплате"
+    # t3 = "оплате за sэл .зн"
+    #
+    # pattern = "[\s\S]{0,15}?(\d[\d\s-]*\d|\d)"
+    #
+    # return clean_and_remove_duplicates(extract_by_closest_match(text, t0, pattern))
+
 
 def clean_and_remove_duplicates(matches):
     cleaned_matches = []
@@ -87,15 +117,27 @@ def clean_and_remove_duplicates(matches):
         # Remove whitespace and newline characters
         cleaned_match = match.replace(" ", "").replace("\n", "")
 
-
         # Add cleaned match to the list if it's not already there
         if cleaned_match not in cleaned_matches and len(cleaned_match) != 0:
             cleaned_matches.append(cleaned_match)
 
-
-
     return cleaned_matches
+
+
+def extract_by_closest_match(text,target,regex):
+
+    words = text.split()
+    closest, cutoff = find_close_matches_with_threshold(target, words)
+    final_pattern = closest[0].__str__() + regex
+    matches = re.findall(final_pattern, text)
+    return matches, cutoff
+
+
 if __name__ == "__main__":
-    text = "your text"
-    organizations_location = "optimaUtils.txt"
-    print(extractorganization(text , organizations_location, 1))
+    mytext = """your ocr output"""
+    # organizations_location = "optimaUtils.txt"
+    t = "Л/счет Лицевой счет"
+    pattern = "[\s\S]{0,15}?(\d[\d\s-]*\d|\d)"
+    print(extractpaymentid(mytext))
+
+    # print(extractorganization(text, organizations_location, 1))
